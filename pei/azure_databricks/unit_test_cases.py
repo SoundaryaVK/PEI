@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath("/Workspace/pei/"))
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import DateType, TimestampType, StructType, StructField, StringType, IntegerType
-from pyspark.sql.functions import col, abs, floor, lit, length, split, sum, round, try_to_date, regexp_extract
+from pyspark.sql.functions import col, abs, floor, lit, length, split, sum, round, try_to_timestamp, regexp_extract
 from azure_databricks.utilities import (
     read_csv_file,
     read_json_file,
@@ -171,3 +171,26 @@ def check_customer_name_format(df: DataFrame):
     assert invalid_df.count() == 0, "Column 'name' contains invalid characters"
     print("Assertion passed: Customer name is in the correct format")
 
+
+def check_year_range(df: DataFrame):
+    """This Function checks the year range 
+        Args :
+        df: Spark DataFrame
+    """
+    invalid_years_df_valid = df.filter(
+    (col("Year").isNull()) |
+    (col("Year") < 1990) |
+    (col("Year") > 2026) |
+    (length(col("Year").cast("string")) != 4))
+
+    # Count the number of invalid rows
+    num_invalid_years_valid = invalid_years_df_valid.count()
+    try:
+    assert num_invalid_years_valid == 0, \
+        f"Year column contains {num_invalid_years_valid} invalid values. " \
+        "Years must be between 1990 and 2026 (inclusive) AND have exactly 4 digits. " \
+        "Invalid rows found: \n"
+    print("All years in the 'year' column of df_valid are valid (1990-2026 and 4 digits).")
+    except AssertionError as e:
+        print(f"Assertion failed for df_valid: {e}")
+        print("Invalid years found:")

@@ -2,7 +2,7 @@ import os
 import pathlib
 import sys
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import when, col, split, regexp_replace, round, sum, year, try_to_date, coalesce
+from pyspark.sql.functions import when, col, split, regexp_replace, round, sum, year, try_to_timestamp, coalesce
 
 def read_csv_file(
     spark: SparkSession,
@@ -199,9 +199,9 @@ def enrich_orders_data(order_df: DataFrame, customer_df: DataFrame, product_df: 
     order_df = order_df.withColumn(
     "order_date_parsed",
     coalesce(
-        try_to_date(col("Order_Date"), "dd/M/yyyy"),    # Try this format first
-        try_to_date(col("Order_Date"), "dd/MM/yyyy"),  # Then try this
-        try_to_date(col("Order_Date"), "d/M/yyyy"),  # Then this
+        try_to_timestamp(col("Order_Date"), "dd/M/yyyy"),    # Try this format first
+        try_to_timestamp(col("Order_Date"), "dd/MM/yyyy"),  # Then try this
+        try_to_timestamp(col("Order_Date"), "d/M/yyyy"),  # Then this
 
     ))
     order_df = order_df.drop("Order_Date")

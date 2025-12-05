@@ -5,10 +5,10 @@ import sys
 notebook_path = os.getcwd()
 sys.path.append(os.path.abspath("/Workspace/pei/"))
 from pyspark.sql import SparkSession, DataFrame
-import pytest
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType
-from pyspark.sql.functions import split, col, sum, col, try_to_date
+from pyspark.sql.functions import split, col, sum, col
+from pyspark.sql.functions import try_to_timestamp
 from azure_databricks.utilities import (
     read_table_from_catalogue,
     clean_dataframe_column_names,
@@ -27,7 +27,8 @@ from azure_databricks.unit_test_cases import(
     check_empty_dataframe,
     check_sum_profit_across_layers,
     check_unique_product_category_sub_category,
-    check_proper_grouping_gold_profit_data
+    check_proper_grouping_gold_profit_data,
+    check_year_range
 )
 
 # COMMAND ----------
@@ -148,6 +149,15 @@ test_gold_profit_df = enrich_gold_profit_df(test_enriched_orders_df)
 # COMMAND ----------
 
 check_sum_profit_across_layers(test_orders_df, test_enriched_orders_df, test_gold_profit_df)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC # Test case to check the Year range of the Year Column
+
+# COMMAND ----------
+
+check_year_range(test_gold_profit_df)
 
 # COMMAND ----------
 
