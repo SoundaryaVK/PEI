@@ -1,12 +1,13 @@
 # PEI
 PEI Assigment
-In this Project we follow MEdallion Architecture - Bronze , Silver, Gold all layers are in Unity Catalogue in the below Schema Names 
+In this Project we follow MEdallion Architecture - Bronze , Silver, Gold ,
+All layers are in Unity Catalogue in the below Schema Names 
 
 1 .Bronze Schema have 3 raw tables namely bronze_customers, bronze_products, bronze_orders
 
 2. Silver Schema have 3 enriched tables namely silver_customer, silver_orders, silver_products
-3. 
-4. Gold Schema have aggregated table named Profit which holds the profit information
+  
+3. Gold Schema have aggregated table named Profit which holds the profit information
 
 I have developed the logic with test case driven approach . 
 
