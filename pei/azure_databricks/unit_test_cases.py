@@ -280,8 +280,3 @@ def validate_aggregated_profit_accuracy(enriched_orders_df: DataFrame, aggregate
     aggregated_sum_profit = aggregated_profit_df.agg(F.sum("Profit")).collect()[0][0]
 
     assert enriched_sum_profit == aggregated_sum_profit,  f"Aggregation Accuracy Failed: {enriched_sum_profit - aggregated_sum_profit} mismatched profit records found.\n"
-
-
-def 
-
-
