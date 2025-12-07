@@ -31,7 +31,8 @@ from azure_databricks.unit_test_cases import(
     check_year_range,
     check_order_to_customer_enriched_foreignkeyintegrity,
     validate_aggregated_profit_accuracy,
-    check_order_to_product_enriched_foreignkeyintegrity
+    check_order_to_product_enriched_foreignkeyintegrity,
+    check_string_datatype_column
 
 )
 

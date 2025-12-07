@@ -2,9 +2,9 @@
 PEI Assigment
 In this Project we follow MEdallion Architecture - Bronze , Silver, Gold all layers are in Unity Catalogue in the below Schema Names 
 
-1 .Bronze Schema have 3 raw tables namely bronze_customers, bronze_products, bronze_orders
-2. Silver Schema have enriched tables namely silver_customer, silver_orders, silver_products
-3. Gold Schema have aggregated table named Profit which holds the profit information 
+1 .Bronze Schema have 3 raw tables namely bronze_customers, bronze_products, bronze_orders \n
+2. Silver Schema have 3 enriched tables namely silver_customer, silver_orders, silver_products \n
+3. Gold Schema have aggregated table named Profit which holds the profit information \n
 
 I have developed the logic with test case driven approach . 
 
@@ -22,4 +22,4 @@ check_proper_grouping_gold_profit_data,
 check_year_range,
 check_order_to_customer_enriched_foreignkeyintegrity,
 validate_aggregated_profit_accuracy,
-check_order_to_product_enriched_foreignkeyintegrity
+check_order_to_product_enriched_foreignkeyintegrity, check_string_datatype_column
