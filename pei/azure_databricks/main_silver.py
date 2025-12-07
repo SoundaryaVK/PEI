@@ -5,7 +5,7 @@ import sys
 notebook_path = os.getcwd()
 sys.path.append(os.path.abspath("/Workspace/pei/"))
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import when, col, split, regexp_replace, round, try_to_timestamp, coalesce
+from pyspark.sql.functions import when, col, split, regexp_replace, round, try_to_date, coalesce
 from azure_databricks.utilities import (
     write_to_delta_table,
     read_table_from_catalogue,
