@@ -27,7 +27,12 @@ from azure_databricks.unit_test_cases import(
     check_empty_dataframe,
     check_sum_profit_across_layers,
     check_unique_product_category_sub_category,
-    check_proper_grouping_gold_profit_data
+    check_proper_grouping_gold_profit_data,
+    check_year_range,
+    check_order_to_customer_enriched_foreignkeyintegrity,
+    validate_aggregated_profit_accuracy,
+    check_order_to_product_enriched_foreignkeyintegrity
+
 )
 
 # COMMAND ----------
@@ -97,6 +102,14 @@ check_date_time_format(test_enriched_orders_df, "Order_Date")
 
 # COMMAND ----------
 
+check_string_datatype_column(test_customer_df, "customer_name")
+
+# COMMAND ----------
+
+check_string_datatype_column(test_customer_df, "country")
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC # Test Case to check the decimal value of the Profit column in orders table is round of 2 decimal places 
 
@@ -113,11 +126,20 @@ check_decimal_format(test_enriched_orders_df, "Profit")
 # COMMAND ----------
 
 # Testing for column availability for customer data 
-check_column_availability(test_customer_df , ["customer_id", "customer_name", "country"])
+check_column_availability(test_enriched_customer_df , ["customer_id", "customer_name", "country"])
 # Testing for column availability for products data 
 check_column_availability(test_enriched_products_df , ["Product_ID", "Category", "Sub_Category"])
 check_column_availability(test_enriched_orders_df , ["Product_ID", "Customer_ID", "Discount", "Order_ID", "Price", "Profit", "Quantity", "Row_ID", "Ship_Date", "Ship_Mode", "Order_Date", "customer_name", "country", "Category", "Sub_Category"])
 check_column_availability
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC # Test the foreign key integrity(customer_id) between enriched order and enriched customer
+
+# COMMAND ----------
+
+check_order_to_customer_enriched_foreignkeyintegrity(test_enriched_orders_df, test_enriched_customer_df)
 
 # COMMAND ----------
 
@@ -129,7 +151,7 @@ check_column_availability
 # COMMAND ----------
 
 #customer_data
-check_empty_dataframe(test_customer_df)
+check_empty_dataframe(test_enriched_customer_df)
 #products_data
 check_empty_dataframe(test_enriched_products_df)
 #orders_data
@@ -152,6 +174,15 @@ check_sum_profit_across_layers(test_orders_df, test_enriched_orders_df, test_gol
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC #Test the year format in gold table Profit
+
+# COMMAND ----------
+
+check_year_range(test_gold_profit_df)
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC # Test the unique entry for Product Category and PRoduct Sub Category between Bronze and Silver 
 
 # COMMAND ----------
@@ -169,4 +200,32 @@ check_proper_grouping_gold_profit_data(test_gold_profit_df)
 
 # COMMAND ----------
 
+# MAGIC %sql
+# MAGIC SELECT 
+# MAGIC   SUM(Profit), 
+# MAGIC   YEAR(Order_Date) AS order_year, 
+# MAGIC   Category, 
+# MAGIC   Sub_Category
+# MAGIC FROM workspace.silver.silver_orders
+# MAGIC GROUP BY 
+# MAGIC   YEAR(Order_Date), 
+# MAGIC   Category, 
+# MAGIC   Sub_Category
 
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC # Test the aggregated profit table matches the sum of profit in enriched_orders_df
+
+# COMMAND ----------
+
+validate_aggregated_profit_accuracy(test_enriched_orders_df, test_gold_profit_df)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC #Test the foreign key integrity(Product_ID) between enriched order and enriched products table
+
+# COMMAND ----------
+
+check_order_to_product_enriched_foreignkeyintegrity(test_enriched_orders_df, test_enriched_products_df)

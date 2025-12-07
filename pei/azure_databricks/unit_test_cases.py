@@ -7,6 +7,7 @@ from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import DateType, TimestampType, StructType, StructField, StringType, IntegerType
 from pyspark.sql.functions import col, abs, floor, lit, length, split, sum, round, try_to_date, regexp_extract
+from pyspark.sql import functions as F
 from azure_databricks.utilities import (
     read_csv_file,
     read_json_file,
@@ -36,6 +37,19 @@ def primary_key_unique_check(df: DataFrame, primary_key: str) :
     assert(df.groupBy(primary_key).count().filter("count > 1").count() == 0, "Primary key {primary_key} is not unique")
     print(f"Assertion passed: Primary Key Column  '{primary_key}' has no duplicates .")
 
+def check_string_datatype_column(df: DataFrame, column_to_check: str):
+    """ This function is to check if the column is of string datatype
+    Args:
+        df : Spark DataFrame
+        column_to_check : Column name
+    """
+    datatype_col = df.schema[column_to_check].dataType
+    try:
+        assert isinstance(datatype_col, StringType), \
+            f"Assertion Failed: Column '{column_to_check}' is unexpectedly a string type. Found: {datatype_col}"
+    except AssertionError as e:
+        print(e)
+    print(f"Assertion passed: Column '{column_to_check}' has datatype string.")
 
 def check_date_time_format(df: DataFrame, column_name: str):
     """ This function is to check if the date time format is correct
@@ -171,3 +185,111 @@ def check_customer_name_format(df: DataFrame):
     assert invalid_df.count() == 0, "Column 'name' contains invalid characters"
     print("Assertion passed: Customer name is in the correct format")
 
+
+def check_customer_name_format(df: DataFrame):
+    """ This function checks if the customer name is in the correct format, should only contain alphabets
+    Args:
+        df : Spark DataFrame"""
+
+    invalid_df = df.filter(~col("customer_name").rlike("^[A-Za-z]+$"))
+
+    assert invalid_df.count() == 0, "Column 'name' contains invalid characters"
+    print("Assertion passed: Customer name is in the correct format")
+
+
+def check_year_range(df: DataFrame):
+    """This Function checks the year range 
+        Args :
+        df: Spark DataFrame
+    """
+    invalid_years_df_valid = df.filter(
+    (col("Year").isNull()) |
+    (col("Year") < 1990) |
+    (col("Year") > 2026) |
+    (length(col("Year").cast("string")) != 4))
+
+    # Count the number of invalid rows
+    num_invalid_years_valid = invalid_years_df_valid.count()
+    try:
+        assert num_invalid_years_valid == 0, \
+        f"Year column contains {num_invalid_years_valid} invalid values. " \
+        "Years must be between 1990 and 2026 (inclusive) AND have exactly 4 digits. " \
+        "Invalid rows found: \n"
+        print("All years in the 'year' column of df_valid are valid (1990-2026 and 4 digits).")
+    except AssertionError as e:
+        print(f"Assertion failed for df_valid: {e}")
+        print("Invalid years found:")
+
+
+def check_order_to_customer_enriched_foreignkeyintegrity(enriched_order_df: DataFrame, enriched_customer_df: DataFrame):
+    """This functions checks the foreign key integrity(customer_id) between enriched order and enriched customer
+    Args:
+        enriched_customer_df : Spark DataFrame
+        enriched_order_df : Spark DataFrame"""
+
+    #Extract distinct customer IDs from the enriched customer table
+    valid_customers_df = enriched_customer_df.select("customer_id").dropDuplicates()
+
+    # Find orders with customer_id not present in enriched customer table
+    missing_customer_ids_df = (
+        enriched_order_df.select("Customer_ID").dropDuplicates()
+                .subtract(valid_customers_df)
+    )
+
+    # Count missing IDs
+    missing_count = missing_customer_ids_df.count()
+    assert missing_count == 0, \
+        f"Foreign key integrity violated: " \
+        "{missing_count} orders have customer IDs not present in enriched customer table."
+    print("Foreign key integrity check passed: All customer IDs in enriched order table are present in enriched customer table.")
+
+
+def check_order_to_product_enriched_foreignkeyintegrity(enriched_order_df: DataFrame, enriched_products_df: DataFrame):
+    """This functions checks the foreign key integrity(product_id) between enriched order and enriched products
+    Args:
+        enriched_products_df : Spark DataFrame
+        enriched_order_df : Spark DataFrame"""
+
+    #Extract distinct product IDs from the enriched products table
+    valid_products_df = enriched_products_df.select("Product_ID").dropDuplicates()
+    # Find orders with product_id not present in enriched products table
+    missing_product_ids_df = (
+        enriched_order_df.select("Product_ID").dropDuplicates()
+                .subtract(valid_products_df)
+    )
+
+    # Count missing IDs
+    missing_count = missing_product_ids_df.count()
+    assert missing_count == 0, \
+        f"Foreign key integrity violated: " \
+        "{missing_count} orders have product IDs not present in enriched products table."
+    print("Foreign key integrity check passed: All product IDs in enriched order table are present in enriched products table.")
+
+
+def validate_aggregated_profit_accuracy(enriched_orders_df: DataFrame, aggregated_profit_df: DataFrame):
+    """
+    Validates that the aggregated profit table matches the sum of profit in enriched_orders_df.
+    
+    Grouping Keys:
+        - product_category
+        - product_sub_category
+        - customer_id
+
+    Raises:
+        AssertionError if mismatches are found.
+    """
+    
+    # Recompute the correct aggregation from enriched orders
+    enriched_orders_df = enriched_orders_df.withColumnRenamed("Category", "Product_Category")
+    enriched_orders_df = enriched_orders_df.withColumnRenamed("Sub_Category", "Product_Sub_Category")
+
+    recomputed_agg_df = (
+        enriched_orders_df
+        .groupBy( "Product_Category", "Product_Sub_Category", "Customer_ID")
+        .agg(F.round(F.sum("Profit"), 2).alias("expected_profit"))
+    )
+    enriched_sum_profit = recomputed_agg_df.agg(F.sum("expected_profit")).collect()[0][0]
+    # Join with the actual aggregated table
+    aggregated_sum_profit = aggregated_profit_df.agg(F.sum("Profit")).collect()[0][0]
+
+    assert enriched_sum_profit == aggregated_sum_profit,  f"Aggregation Accuracy Failed: {enriched_sum_profit - aggregated_sum_profit} mismatched profit records found.\n"
