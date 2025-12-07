@@ -102,6 +102,14 @@ check_date_time_format(test_enriched_orders_df, "Order_Date")
 
 # COMMAND ----------
 
+check_string_datatype_column(test_customer_df, "customer_name")
+
+# COMMAND ----------
+
+check_string_datatype_column(test_customer_df, "country")
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC # Test Case to check the decimal value of the Profit column in orders table is round of 2 decimal places 
 

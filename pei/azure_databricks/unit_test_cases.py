@@ -37,6 +37,19 @@ def primary_key_unique_check(df: DataFrame, primary_key: str) :
     assert(df.groupBy(primary_key).count().filter("count > 1").count() == 0, "Primary key {primary_key} is not unique")
     print(f"Assertion passed: Primary Key Column  '{primary_key}' has no duplicates .")
 
+def check_string_datatype_column(df: DataFrame, column_to_check: str):
+    """ This function is to check if the column is of string datatype
+    Args:
+        df : Spark DataFrame
+        column_to_check : Column name
+    """
+    datatype_col = df.schema[column_to_check].dataType
+    try:
+        assert isinstance(datatype_col, StringType), \
+            f"Assertion Failed: Column '{column_to_check}' is unexpectedly a string type. Found: {datatype_col}"
+    except AssertionError as e:
+        print(e)
+    print(f"Assertion passed: Column '{column_to_check}' has datatype string.")
 
 def check_date_time_format(df: DataFrame, column_name: str):
     """ This function is to check if the date time format is correct
